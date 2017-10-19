@@ -22,7 +22,7 @@ func init() {
 }
 
 func TestRefImpLogin(t *testing.T) {
-	clientConfig := &IShareClientConfig{
+	clientConfig := &ClientConfig{
 		EORI:               viper.GetString("client.EORI"),
 		COC:                viper.GetString("client.COC"),
 		PublicKeyPath:      viper.GetString("client.PublicKeyPath"),
@@ -46,7 +46,7 @@ func TestRefImpLogin(t *testing.T) {
 }
 
 func TestPortBaseLogin(t *testing.T) {
-	clientConfig := &IShareClientConfig{
+	clientConfig := &ClientConfig{
 		EORI:               viper.GetString("client.EORI"),
 		COC:                viper.GetString("client.COC"),
 		PublicKeyPath:      viper.GetString("client.PublicKeyPath"),

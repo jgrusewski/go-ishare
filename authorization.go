@@ -15,14 +15,14 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// IShareClient is the interface for this client library.
-type IShareClient interface {
+// Client is the interface for this client library.
+type Client interface {
 	GenerateJWTToken() (string, error)
 	AccessRequest() (*AccessToken, error)
 }
 
-// IShareClaims is a wrapper around JWT Standard claims, if the spec changes this is a convient way to implement custom claims.
-type IShareClaims struct {
+// Claims is a wrapper around JWT Standard claims, if the spec changes this is a convient way to implement custom claims.
+type Claims struct {
 	*jwt.StandardClaims
 }
 
@@ -33,8 +33,8 @@ type AccessToken struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-// IShareClientConfig holds the configuration to start the authorization process.
-type IShareClientConfig struct {
+// ClientConfig holds the configuration to start the authorization process.
+type ClientConfig struct {
 	EORI               string // Client EORI
 	COC                string // Clients COC
 	PublicKeyPath      string // path to public key file (myisharecertificate.cert.pem)
@@ -46,8 +46,8 @@ type IShareClientConfig struct {
 }
 
 // default iShare client
-type iShareClient struct {
-	config        *IShareClientConfig
+type client struct {
+	config        *ClientConfig
 	publicKey     *rsa.PublicKey
 	publicKeyCert []byte
 	privateKey    *rsa.PrivateKey
@@ -55,8 +55,8 @@ type iShareClient struct {
 
 // NewClient returns a new iShare client, it loads and parses the iShare certificate files.
 // It returns an error when the certificates can not be found or your private key password is incorrect.
-func NewClient(config *IShareClientConfig) (IShareClient, error) {
-	var ishare = &iShareClient{config: config}
+func NewClient(config *ClientConfig) (Client, error) {
+	var ishare = &client{config: config}
 	if err := ishare.parsePublicKey(); err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func NewClient(config *IShareClientConfig) (IShareClient, error) {
 
 // GenerateJWTToken returns a string holding a signed JWT token to build an access request.
 // A error returns when the signing of the JWT-token failed.
-func (i *iShareClient) GenerateJWTToken() (string, error) {
+func (i *client) GenerateJWTToken() (string, error) {
 	t := jwt.New(jwt.GetSigningMethod("RS256"))
 	if i.config.StripCertificate {
 		certificate := strings.Replace(string(i.publicKeyCert), "-----BEGIN CERTIFICATE-----", "", -1)
@@ -80,7 +80,7 @@ func (i *iShareClient) GenerateJWTToken() (string, error) {
 		t.Header["x5c"] = string(i.publicKeyCert)
 	}
 
-	t.Claims = &IShareClaims{
+	t.Claims = &Claims{
 		&jwt.StandardClaims{
 			Id:        uuid.NewV4().String(),
 			Issuer:    i.config.EORI,
@@ -102,7 +102,7 @@ func (i *iShareClient) GenerateJWTToken() (string, error) {
 // Access Request executes the actual http(s) request.
 // On success the access token will be returned.
 // If something goes wrong ie http.Status Code != 200 it will return the error.
-func (i *iShareClient) AccessRequest() (*AccessToken, error) {
+func (i *client) AccessRequest() (*AccessToken, error) {
 	client := http.DefaultClient
 	token, err := i.GenerateJWTToken()
 	if err != nil {
@@ -148,7 +148,7 @@ func (i *iShareClient) AccessRequest() (*AccessToken, error) {
 	return accessToken, nil
 }
 
-func (i *iShareClient) parsePublicKey() error {
+func (i *client) parsePublicKey() error {
 	var err error
 	i.publicKeyCert, err = ioutil.ReadFile(i.config.PublicKeyPath)
 	if err != nil {
@@ -163,7 +163,7 @@ func (i *iShareClient) parsePublicKey() error {
 	return nil
 }
 
-func (i *iShareClient) parsePrivateKey() error {
+func (i *client) parsePrivateKey() error {
 	privateKey, err := ioutil.ReadFile(i.config.PrivateKeyPath)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (i *iShareClient) parsePrivateKey() error {
 	return nil
 }
 
-func (i *iShareClient) decryptPrivateKey(key []byte, password []byte) ([]byte, error) {
+func (i *client) decryptPrivateKey(key []byte, password []byte) ([]byte, error) {
 	block, rest := pem.Decode(key)
 	if len(rest) > 0 {
 		return nil, errors.New("invalid certificate, extra data included")
