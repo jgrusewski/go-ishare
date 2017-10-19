@@ -1,0 +1,6 @@
+[client]
+EORI                = "EORI."
+COC                 = "KVK."
+PublicKeyPath       = "./ishare.cert.pem"
+PrivateKeyPath      = "./ishare.key.pem"
+PrivateKeyPassword  = "MyVerySecretPrivateKey"
