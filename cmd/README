@@ -1,0 +1,12 @@
+Copy token-generator(.exe) and create ishare.config.toml with this configuration
+
+```
+[client]
+EORI                = "EORI."
+COC                 = "KVK."
+PublicKeyPath       = "./ishare.cert.pem"
+PrivateKeyPath      = "./ishare.key.pem"
+PrivateKeyPassword  = "MyVerySecretPrivateKey"
+```
+
+Run token-generator.exe on the command prompt, and a signed JWT token is generated.
